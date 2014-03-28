@@ -8,6 +8,16 @@ Portable Version
 ================
 You can get portable executable for Windows [here](https://www.mediafire.com/folder/hgd33h95ooh9p/VitaUpdateBlocker)
 
+
+Troubleshooting
+===============
+If you're having problem with downloading large files at PSN, follow these steps:
+
+1. Open Store application with proxy setting.
+2. When store main loads, go settings application and disable proxy without killing Store app.
+3. Back to Store app and download files.
+
+
 Requirements
 ============
 To use VitaUpdateBlocker you need these requirements(portable version users can ignore this)
