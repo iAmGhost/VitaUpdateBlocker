@@ -4,19 +4,23 @@ This application does what [Chales Proxy Trick](http://wololo.net/2013/01/25/psn
 
 Also this is Python based cross-platform application so you can even install this application to 24/7 running server to access PSN anyhwere.
 
+Features
+========
+* Automatically detects latest OFW version and Vita's version.
+* Blocks other requests than update information so you can host this script without worrying about consuming traffic.
+
 Portable Version
 ================
 You can get portable executable for Windows [here](https://www.mediafire.com/folder/hgd33h95ooh9p/VitaUpdateBlocker)
 
-
-Troubleshooting
-===============
-If you're having problem with downloading large files at PSN, follow these steps:
-
-1. Open Store application with proxy setting.
-2. When store main loads, go settings application and disable proxy without killing Store app.
-3. Back to Store app and download files.
-
+Instructions
+============
+1. Start VitaUpdateBlocker.exe (or python vita_update_blocker.py)
+2. Open Settings app on your Vita, Go to Network-Wi-Fi Setting-AP Name-Advances Settings.
+3. Change proxy settings to ip:port that shown on VitaUpdateBlocker.
+4. Save settings and open PS Store application.
+5. You'll see front page of store, go Settings app again and disable proxy.
+6. Download contents from store or play games online.
 
 Requirements
 ============
