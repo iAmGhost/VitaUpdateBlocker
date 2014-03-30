@@ -5,9 +5,12 @@ from libmproxy import controller, proxy
 import re
 import time
 import sys
+import urllib
 
 
 class VitaUpdateBlockerMaster(controller.Master):
+    request_version_string = None
+
     def __init__(self, server):
         controller.Master.__init__(self, server)
         self.stickyhosts = {}
@@ -19,27 +22,53 @@ class VitaUpdateBlockerMaster(controller.Master):
             self.shutdown()
 
     def handle_request(self, msg):
+        if 'psp2-updatelist.xml' in msg.path:
+            query = parse_qs(msg.path.split('?')[1])
+            version = query['ver'][0]
+
+            self.request_version_string = "%s.%s.%s" % (version[0:2],
+                                                        version[2:5],
+                                                        version[5:9])
+
+            log("Vita's real version is: %s" % self.request_version_string)
+
+            path = msg.path[0:msg.path.find('&sid')]
+            content = urllib.urlopen("http://%s%s" % (msg.host, path)).read()
+
+            latest_version = re.search(r'level1_system_version="(.+?)"',
+                                       content).group(1)
+
+            log("latest version is: %s" % latest_version)
+
+            latest_version = latest_version.replace('.', '')
+
+            msg.path = msg.path.replace('?ver=%s' % query['ver'],
+                                        latest_version)
+        else:
+            msg.path = '/'
+            msg.host = '255.255.255.255'
+
         msg.reply()
 
     def handle_response(self, msg):
         if 'psp2.update.playstation.net' in msg.request.host:
-            query = parse_qs(msg.request.path.split('?')[1])
-            version = re.sub('(\d{2})(\d{3})(\d{3})',
-                             '\g<1>.\g<2>.\g<3>',
-                             query['ver'][0])
+            version = self.request_version_string
 
-            msg.content = re.sub('level1_system_version=".+?"',
+            msg.content = re.sub(r'level1_system_version=".+?"',
                                  'level1_system_version="%s"' % version,
                                  msg.content)
-            msg.content = re.sub('level2_system_version=".+?"',
+            msg.content = re.sub(r'level2_system_version=".+?"',
                                  'level2_system_version="%s"' % version,
                                  msg.content)
 
-            msg.content = re.sub('<version system_version=".+" ',
+            msg.content = re.sub(r'<version system_version=".+" ',
                                  '<version system_version="%s" ' % version,
                                  msg.content)
 
             log("Spoofed latest version to %s." % version)
+            log("You can disable proxy settings now.")
+        else:
+            msg.content = '._.)?'
 
         msg.reply()
 
@@ -47,7 +76,7 @@ class VitaUpdateBlockerMaster(controller.Master):
 def show_intro():
     print ("""
 ==================================
-VitaUpdateBlocker v1.0
+VitaUpdateBlocker v1.1
 http://iamghost.kr
 ==================================
 """.strip())
