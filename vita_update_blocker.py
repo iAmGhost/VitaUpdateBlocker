@@ -6,14 +6,16 @@ import re
 import time
 import sys
 import urllib
+import argparse
 
 
 class VitaUpdateBlockerMaster(controller.Master):
     request_version_string = None
 
-    def __init__(self, server):
+    def __init__(self, server, block_traffics=False):
         controller.Master.__init__(self, server)
         self.stickyhosts = {}
+        self.block_traffics = block_traffics
 
     def run(self):
         try:
@@ -22,7 +24,8 @@ class VitaUpdateBlockerMaster(controller.Master):
             self.shutdown()
 
     def handle_request(self, msg):
-        if 'psp2-updatelist.xml' in msg.path:
+        if 'psp2-updatelist.xml' in msg.path and \
+           msg.host[-15:] == 'playstation.net':
             query = parse_qs(msg.path.split('?')[1])
             version = query['ver'][0]
 
@@ -45,13 +48,15 @@ class VitaUpdateBlockerMaster(controller.Master):
             msg.path = msg.path.replace('?ver=%s' % query['ver'],
                                         latest_version)
         else:
-            msg.path = '/'
-            msg.host = '255.255.255.255'
+            if self.block_traffics:
+                msg.path = '/'
+                msg.host = '255.255.255.255'
 
         msg.reply()
 
     def handle_response(self, msg):
-        if 'psp2.update.playstation.net' in msg.request.host:
+        if 'psp2-updatelist.xml' in msg.request.path and \
+           msg.request.host[-15:] == 'playstation.net':
             version = self.request_version_string
 
             msg.content = re.sub(r'level1_system_version=".+?"',
@@ -68,7 +73,8 @@ class VitaUpdateBlockerMaster(controller.Master):
             log("Spoofed latest version to %s." % version)
             log("You can disable proxy settings now.")
         else:
-            msg.content = '._.)?'
+            if self.block_traffics:
+                msg.content = '._.)?'
 
         msg.reply()
 
@@ -76,7 +82,7 @@ class VitaUpdateBlockerMaster(controller.Master):
 def show_intro():
     print ("""
 ==================================
-VitaUpdateBlocker v1.1
+VitaUpdateBlocker v1.1b
 http://iamghost.kr
 ==================================
 """.strip())
@@ -97,21 +103,29 @@ def log(text):
 
 
 def main():
-    port = 8080
+    parser = argparse.ArgumentParser(prog='PROG',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    try:
-        port = int(sys.argv[1])
-    except Exception:
-        pass
+    parser.add_argument('--port', type=int, default=8080, help='Proxy port')
+    parser.add_argument('--block-traffics', default=False, action='store_true')
+
+    args = parser.parse_args(sys.argv[1:])
+
+    port = args.port
 
     show_intro()
     show_network_info(port)
+
+    if not args.block_traffics:
+        log("Blocking non-related traffic is DISABLED.")
+    else:
+        log("Blocking non-related traffic is ENABLED.")
 
     config = proxy.ProxyConfig(
         cacert=os.path.expanduser("~/.mitmproxy/mitmproxy-ca.pem")
     )
     server = proxy.ProxyServer(config, port)
-    m = VitaUpdateBlockerMaster(server)
+    m = VitaUpdateBlockerMaster(server, block_traffics=args.block_traffics)
     m.run()
 
 if __name__ == '__main__':
