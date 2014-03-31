@@ -82,7 +82,7 @@ class VitaUpdateBlockerMaster(controller.Master):
 def show_intro():
     print ("""
 ==================================
-VitaUpdateBlocker v1.1b
+VitaUpdateBlocker v1.2
 http://iamghost.kr
 ==================================
 """.strip())
