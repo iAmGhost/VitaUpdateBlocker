@@ -31,5 +31,5 @@ Requirements
 ============
 To use VitaUpdateBlocker you need these requirements(portable version users can ignore this)
 
-* Python 2.7.6 (Python 3 is not supported due to compatibility with mitmproxy)
-* [mitmproxy](http://mitmproxy.org)
+* Python 2 (Python 3 is not supported due to compatibility with mitmproxy)
+* [mitmproxy==0.12.1](http://mitmproxy.org)

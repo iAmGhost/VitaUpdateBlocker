@@ -2,6 +2,7 @@ import os
 import socket
 from urlparse import parse_qs
 from libmproxy import controller, proxy
+from libmproxy.proxy.server import ProxyServer
 import re
 import time
 import sys
@@ -82,7 +83,7 @@ class VitaUpdateBlockerMaster(controller.Master):
 def show_intro():
     print ("""
 ==================================
-VitaUpdateBlocker v1.2
+VitaUpdateBlocker v1.2a
 http://iamghost.kr
 ==================================
 """.strip())
@@ -121,10 +122,8 @@ def main():
     else:
         log("Blocking non-related traffic is ENABLED.")
 
-    config = proxy.ProxyConfig(
-        cacert=os.path.expanduser("~/.mitmproxy/mitmproxy-ca.pem")
-    )
-    server = proxy.ProxyServer(config, port)
+    config = proxy.ProxyConfig(port=port)
+    server = ProxyServer(config)
     m = VitaUpdateBlockerMaster(server, block_traffics=args.block_traffics)
     m.run()
 
