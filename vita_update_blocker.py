@@ -25,9 +25,10 @@ class VitaUpdateBlockerMaster(controller.Master):
             self.shutdown()
 
     def handle_request(self, msg):
-        if 'psp2-updatelist.xml' in msg.path and \
-           msg.host[-15:] == 'playstation.net':
-            query = parse_qs(msg.path.split('?')[1])
+        req = msg.request
+        if 'psp2-updatelist.xml' in req.path and \
+           req.host[-15:] == 'playstation.net':
+            query = parse_qs(req.path.split('?')[1])
             version = query['ver'][0]
 
             self.request_version_string = "%s.%s.%s" % (version[0:2],
@@ -36,8 +37,8 @@ class VitaUpdateBlockerMaster(controller.Master):
 
             log("Vita's real version is: %s" % self.request_version_string)
 
-            path = msg.path[0:msg.path.find('&sid')]
-            content = urllib.urlopen("http://%s%s" % (msg.host, path)).read()
+            path = req.path[0:req.path.find('&sid')]
+            content = urllib.urlopen("http://%s%s" % (req.host, path)).read()
 
             latest_version = re.search(r'level1_system_version="(.+?)"',
                                        content).group(1)
@@ -46,36 +47,38 @@ class VitaUpdateBlockerMaster(controller.Master):
 
             latest_version = latest_version.replace('.', '')
 
-            msg.path = msg.path.replace('?ver=%s' % query['ver'],
+            req.path = req.path.replace('?ver=%s' % query['ver'],
                                         latest_version)
         else:
             if self.block_traffics:
-                msg.path = '/'
-                msg.host = '255.255.255.255'
+                req.path = '/'
+                req.host = '255.255.255.255'
 
         msg.reply()
 
     def handle_response(self, msg):
-        if 'psp2-updatelist.xml' in msg.request.path and \
-           msg.request.host[-15:] == 'playstation.net':
+        req = msg.request
+        res = msg.response
+        if 'psp2-updatelist.xml' in req.path and \
+           req.host[-15:] == 'playstation.net':
             version = self.request_version_string
 
-            msg.content = re.sub(r'level1_system_version=".+?"',
+            res.content = re.sub(r'level1_system_version=".+?"',
                                  'level1_system_version="%s"' % version,
-                                 msg.content)
-            msg.content = re.sub(r'level2_system_version=".+?"',
+                                 res.content)
+            res.content = re.sub(r'level2_system_version=".+?"',
                                  'level2_system_version="%s"' % version,
-                                 msg.content)
+                                 res.content)
 
-            msg.content = re.sub(r'<version system_version=".+" ',
+            res.content = re.sub(r'<version system_version=".+" ',
                                  '<version system_version="%s" ' % version,
-                                 msg.content)
+                                 res.content)
 
             log("Spoofed latest version to %s." % version)
             log("You can disable proxy settings now.")
         else:
             if self.block_traffics:
-                msg.content = '._.)?'
+                res.content = '._.)?'
 
         msg.reply()
 
